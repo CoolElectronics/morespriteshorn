@@ -66,7 +66,7 @@ function loadpico8(filename)
                 end
         end
     local spritesheet_data = love.image.newImageData(128, 128)
-    for j = 0, spritesheet_data:getHeight()/2 - 1 do
+    for j = 0, spritesheet_data:getHeight() - 1 do
         local line = sections["gfx"] and sections["gfx"][j + 1] or "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
         for i = 0, spritesheet_data:getWidth() - 1 do
             local s = string.sub(line, 1 + i, 1 + i)
@@ -269,13 +269,19 @@ function savePico8(filename)
     -- start out by making sure both sections exist, and are sized to max size
 
 
-    local gfxexist, mapexist=false,false
+    local gfxexist, mapexist,labelstart
     for k = 1, #out do
         if out[k] == "__gfx__" then
             gfxexist=true
         elseif out[k] == "__map__" then
             mapexist=true
+        elseif out[k] == "__label__" then
+            labelstart = k
         end
+    end
+    local gfxtable = {}
+    for j = gfxstart, labelstart-1 do
+        gfxtable[j] = out[j]
     end
 
     if not gfxexist then
@@ -326,6 +332,10 @@ function savePico8(filename)
         end
         out[gfxstart+(j-32)*2+65] = string.sub(line, 1, 128)
         out[gfxstart+(j-32)*2+66] = string.sub(line, 129, 256)
+    end
+
+    for j = gfxstart, labelstart-1 do
+        out[j] = gfxtable[j]
     end
 
     local cartdata=table.concat(out, "\n")
