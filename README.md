@@ -1,4 +1,33 @@
-# Everhorn
+# Morespriteshorn
+
+a modified version of everhorn that allows you to use the bottom tile pages for sprites instead of mapdata, and also allows you to change the exit direction of a level
+
+get started by using morespritescore.p8 instead of evercore.p8 as a base, and open that in the editor
+
+to change the exit type, press r to rename the level, and change the value of the second input field from 0-3
+
+0 - exit from the top
+1 - exit from the right
+2 - exit from the left
+3 - exit from the bottom
+
+
+**WARNING**
+this is an extremely buggy patch, be careful
+
+if you decide to use the bottom tile pages for sprites, they can't be used for mapdata. place mapdata levels in the top half of the map instead.
+hex loaded levels are unaffected and can be placed wherever.
+
+ping me on discord (@CoolElectronics#4683) if anything breaks
+
+
+
+i'm planning on adding support for a simple hex compression algorithim later if i feel like it
+
+
+
+original documentation down here
+
 **DESPITE MY BEST EFFORTS THERE MAY BE BUGS, CONSIDER THIS A BETA AT THIS POINT**
 
 **Everhorn** is a map editor for Celeste Classic mods that use [Evercore](https://github.com/CelesteClassic/evercore) or a compatible level system.

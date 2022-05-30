@@ -76,16 +76,16 @@ function loadpico8(filename)
         end
     end
 
-    for j =8,15 do
-        for i = 0, 15 do
-                   local id=i+16*(j-8)
-                     local d1=math.floor(id/16)
-                     local d2=id%16
+    -- for j =8,15 do
+        -- for i = 0, 15 do
+                --    local id=i+16*(j-8)
+                    --  local d1=math.floor(id/16)
+                    --  local d2=id%16
                      --spritesheet_data:paste(p8font,8*i,8*j,get_font_quad(d1))
-                     spritesheet_data:paste(p8fontGrey,8*i,8*j,get_font_quad(d1))
-                     spritesheet_data:paste(p8font,8*i+4,8*j,get_font_quad(d2))
-        end
-    end
+                    --  spritesheet_data:paste(p8fontGrey,8*i,8*j,get_font_quad(d1))
+                    --  spritesheet_data:paste(p8font,8*i+4,8*j,get_font_quad(d2))
+        -- end
+    -- end
 
     data.spritesheet = love.graphics.newImage(spritesheet_data)
 
@@ -154,10 +154,10 @@ function loadpico8(filename)
     -- load levels
     if levels[1] then
         for n, s in pairs(levels) do
-            local x, y, w, h, title = string.match(s, "^([^,]*),([^,]*),([^,]*),([^,]*),?([^,]*)$")
+            local x, y, w, h, title,exit = string.match(s, "^([^,]*),([^,]*),([^,]*),([^,]*),?([^,]*),([^,]*)$")
             x, y, w, h = tonumber(x), tonumber(y), tonumber(w), tonumber(h)
             if x and y and w and h then -- this confirms they're there and they're numbers
-                data.roomBounds[n] = {x=x*128, y=y*128, w=w*16, h=h*16, title=title}
+                data.roomBounds[n] = {x=x*128, y=y*128, w=w*16, h=h*16, title=title,exit=exit}
             else
                 print("wat", s)
             end
@@ -179,6 +179,7 @@ function loadpico8(filename)
                 local room = newRoom(b.x, b.y, b.w, b.h)
                 loadroomdata(room, levelstr)
                 room.title = b.title
+                room.exit = b.exit
                 data.rooms[n] = room
             end
         end
@@ -190,6 +191,7 @@ function loadpico8(filename)
             local room = newRoom(b.x, b.y, b.w, b.h)
             room.hex=false
             room.title = b.title
+            room.exit = b.exit
 
             for i = 0, b.w - 1 do
                 for j = 0, b.h - 1 do
@@ -257,7 +259,7 @@ function savePico8(filename)
     local levels, mapdata = {}, {}
     for n = 1, #project.rooms do
         local room = project.rooms[n]
-        levels[n] = string.format("%g,%g,%g,%g,%s", room.x/128, room.y/128, room.w/16, room.h/16, room.title)
+        levels[n] = string.format("%g,%g,%g,%g,%s,%s", room.x/128, room.y/128, room.w/16, room.h/16, room.title,room.exit)
 
         if room.hex then
             mapdata[n] = dumproomdata(room)
@@ -269,19 +271,13 @@ function savePico8(filename)
     -- start out by making sure both sections exist, and are sized to max size
 
 
-    local gfxexist, mapexist,labelstart
+    local gfxexist, mapexist=false,false
     for k = 1, #out do
         if out[k] == "__gfx__" then
             gfxexist=true
         elseif out[k] == "__map__" then
             mapexist=true
-        elseif out[k] == "__label__" then
-            labelstart = k
         end
-    end
-    local gfxtable = {}
-    for j = gfxstart, labelstart-1 do
-        gfxtable[j] = out[j]
     end
 
     if not gfxexist then
@@ -306,14 +302,24 @@ function savePico8(filename)
             end
         end
     end
-    local gfxstart, mapstart
+    local gfxstart, mapstart,labelstart
     for k = 1, #out do
         if out[k] == "__gfx__" then
             gfxstart = k
         elseif out[k] == "__map__" then
             mapstart = k
+        elseif out[k] == "__label__" then
+            labelstart = k
         end
     end
+
+    print(labelstart)
+
+    local gfxtable = {}
+    for j = gfxstart, labelstart-1 do
+        gfxtable[j] = out[j]
+    end
+
     if not (mapstart and gfxstart) then
         error("uuuh")
     end

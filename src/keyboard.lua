@@ -177,8 +177,6 @@ function love.keypressed(key, scancode, isrepeat)
                 app.tool = "select"
                 select(0, 0, activeRoom().w - 1, activeRoom().h - 1)
             end
-		elseif key=="h" then 
-			app.showGarbageTiles=not app.showGarbageTiles
         end
     else -- if ctrl is not down
 		if key == "delete" and love.keyboard.isDown("lshift") then
@@ -225,6 +223,7 @@ function love.keypressed(key, scancode, isrepeat)
 		--end
 		--room.title = title
 		room.title = ""
+        room.exit = 0
         
         table.insert(project.rooms, room)
         app.room = #project.rooms
@@ -257,7 +256,8 @@ function love.keyreleased(key, scancode)
     if key == "r" and not love.keyboard.isDown("lctrl") and activeRoom() then
 		app.renameRoom = activeRoom()
         app.renameRoomVTable = { name = {value = app.renameRoom.title},
-                                 hex  = {value = app.renameRoom.hex}
+                                 hex  = {value = app.renameRoom.hex},
+                                 exit = {value = app.renameRoom.exit}
                                }
     end
 end

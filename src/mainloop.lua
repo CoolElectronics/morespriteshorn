@@ -92,6 +92,7 @@ function love.load(args)
 end
 
 function love.update(dt)
+    app.showGarbageTiles = true
     app.W, app.H = love.graphics.getDimensions()
     local rpw = app.W * 0.10 -- room panel width
     app.left, app.top = rpw, 0
@@ -168,7 +169,7 @@ function love.update(dt)
     if app.renameRoom then
         local room = app.renameRoom
         
-        local w, h = 200*global_scale, 125*global_scale
+        local w, h = 200*global_scale, 250*global_scale
         if ui:windowBegin("Rename room", app.W/2 - w/2, app.H/2 - h/2, w, h, {"title", "border", "closable", "movable"}) then
             local x,y=div8(room.x),div8(room.y)
             local fits_on_map=x>=0 and x+room.w<=128 and y>=0 and y+room.h<=64
@@ -192,11 +193,18 @@ function love.update(dt)
             ui:layoutRow("dynamic", 25*global_scale, 1)
             
             local state, changed
-            ui:editFocus()
+            -- ui:editFocus()
             state, changed = ui:edit("simple", app.renameRoomVTable.name)
+            ui:label("exit type: 0 - top, 1 - right")
+            ui:label("2 - left, 3 - bottom")
+            local state2, changed2
+            -- ui:editFocus()
+            state2, changed2 = ui:edit("simple", app.renameRoomVTable.exit)
+            
             
             if ui:button("OK") or app.enterPressed then
                 room.title = app.renameRoomVTable.name.value
+                room.exit = app.renameRoomVTable.exit.value
                 room.hex = app.renameRoomVTable.hex.value
                 app.renameRoom = nil
             end
