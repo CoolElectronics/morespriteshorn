@@ -1,4 +1,266 @@
 -- functions to read lines correctly for \r\n line endings
+utf8 = require("utf8")
+chars = {
+"¹",
+"²",
+"³",
+"⁴",
+"⁵",
+"⁶",
+"⁷",
+"⁸",
+"\t",
+"\n",
+"ᵇ",
+"ᶜ",
+"\r",
+"ᵉ",
+"ᶠ",
+"▮",
+"■",
+"□",
+"⁙",
+"⁘",
+"‖",
+"◀",
+"▶",
+"「",
+"」",
+"¥",
+"•",
+"、",
+"。",
+"゛",
+"゜",
+" ",
+"!",
+"\"",
+"#",
+"$",
+"%",
+"&",
+"'",
+"(",
+")",
+"*",
+"+",
+",",
+"-",
+".",
+"/",
+"0",
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+":",
+";",
+"<",
+"=",
+">",
+"?",
+"@",
+"A",
+"B",
+"C",
+"D",
+"E",
+"F",
+"G",
+"H",
+"I",
+"J",
+"K",
+"L",
+"M",
+"N",
+"O",
+"P",
+"Q",
+"R",
+"S",
+"T",
+"U",
+"V",
+"W",
+"X",
+"Y",
+"Z",
+"[",
+"\\",
+"]",
+"^",
+"_",
+"`",
+"a",
+"b",
+"c",
+"d",
+"e",
+"f",
+"g",
+"h",
+"i",
+"j",
+"k",
+"l",
+"m",
+"n",
+"o",
+"p",
+"q",
+"r",
+"s",
+"t",
+"u",
+"v",
+"w",
+"x",
+"y",
+"z",
+"{",
+"|",
+"}",
+"~",
+"○",
+"█",
+"▒",
+"🐱",
+"⬇️",
+"░",
+"✽",
+"●",
+"♥",
+"☉",
+"웃",
+"⌂",
+"⬅️",
+"😐",
+"♪",
+"🅾️",
+"◆",
+"…",
+"➡️",
+"★",
+"⧗",
+"⬆️",
+"ˇ",
+"∧",
+"❎",
+"▤",
+"▥",
+"あ",
+"い",
+"う",
+"え",
+"お",
+"か",
+"き",
+"く",
+"け",
+"こ",
+"さ",
+"し",
+"す",
+"せ",
+"そ",
+"た",
+"ち",
+"つ",
+"て",
+"と",
+"な",
+"に",
+"ぬ",
+"ね",
+"の",
+"は",
+"ひ",
+"ふ",
+"へ",
+"ほ",
+"ま",
+"み",
+"む",
+"め",
+"も",
+"や",
+"ゆ",
+"よ",
+"ら",
+"り",
+"る",
+"れ",
+"ろ",
+"わ",
+"を",
+"ん",
+"っ",
+"ゃ",
+"ゅ",
+"ょ",
+"ア",
+"イ",
+"ウ",
+"エ",
+"オ",
+"カ",
+"キ",
+"ク",
+"ケ",
+"コ",
+"サ",
+"シ",
+"ス",
+"セ",
+"ソ",
+"タ",
+"チ",
+"ツ",
+"テ",
+"ト",
+"ナ",
+"ニ",
+"ヌ",
+"ネ",
+"ノ",
+"ハ",
+"ヒ",
+"フ",
+"ヘ",
+"ホ",
+"マ",
+"ミ",
+"ム",
+"メ",
+"モ",
+"ヤ",
+"ユ",
+"ヨ",
+"ラ",
+"リ",
+"ル",
+"レ",
+"ロ",
+"ワ",
+"ヲ",
+"ン",
+"ッ",
+"ャ",
+"ュ",
+"ョ",
+"◜",
+"◝"
+}
+ords={}
+for k,v in pairs(chars) do
+   ords[v]=k
+end
 
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
@@ -43,6 +305,7 @@ function loadpico8(filename)
     local sections = {}
     local cursec = nil
     for line in cr_file_lines(file) do
+        print(line)
         local sec = string.match(line, "^__(%a+)__$")
         if sec then
             cursec = sec
@@ -124,15 +387,26 @@ function loadpico8(filename)
         -- cut out comments - loadstring doesn't parse them for some reason
         evh = string.gsub(evh, "%-%-[^\n]*\n", "")
         evh = string.gsub(evh, "//[^\n]*\n", "")
-
         local chunk, err = loadstring(evh)
+        print("loading mapdata")
         if not err then
             local env = {}
             chunk = setfenv(chunk, env)
             chunk()
-
             levels, mapdata = env.levels, env.mapdata
         end
+    end
+    print(ords["¹"])
+
+    for i=1,#mapdata do
+        local cvdata = ""
+        for index=1, utf8.len(mapdata[i]) do
+            local offset = utf8.offset(mapdata[i],index)
+            local nextstart = utf8.offset(mapdata[i],index+1)
+            local idx = string.sub(mapdata[i],offset,nextstart -1)
+            cvdata = cvdata..tohex(tonumber(ords[idx])-1)
+        end
+        mapdata[i] = cvdata
     end
 
     mapdata = mapdata or {}
@@ -174,6 +448,7 @@ function loadpico8(filename)
     -- load mapdata
     if mapdata then
         for n, levelstr in pairs(mapdata) do
+            print(levelstr)
             local b = data.roomBounds[n]
             if b then
                 local room = newRoom(b.x, b.y, b.w, b.h)
@@ -265,6 +540,32 @@ function savePico8(filename)
             mapdata[n] = dumproomdata(room)
         end
     end
+    
+    -- for i=1,#chars do 
+    --     print(i)
+    --     print(chars[i])
+    -- end
+    print("here is the thing")
+    for i=1,#mapdata do
+        for index=1, string.len(mapdata[i]) do
+            print(string.sub(mapdata[i],index,index))
+        end
+        print("asdkasldkasl;")
+        local cvdata = ""
+
+        for index=1, string.len(mapdata[i]),2 do
+            local r = string.sub(mapdata[i],index,index+1)
+            print(r)
+            local idx = fromhex(r)
+            print(idx)
+            -- local idx = string.sub(mapdata[i],index,index)
+            -- print(chars[num])
+            cvdata = cvdata..chars[idx+1]
+        end
+        mapdata[i] = cvdata
+        -- print(mapdata[i])
+    end
+
 
     -- map section
 
@@ -368,3 +669,147 @@ function savePico8(filename)
 
     return true
 end
+
+--px9 stuff
+
+-- function
+--     px9_comp(x0,y0,w,h,dest,vget)
+
+--     local dest0=dest
+--     local bit=1
+--     local byte=0
+
+--     local cache = {}
+
+--     local function vlist_val(l, val)
+--         local v,i=l[1],1
+--         while v!=val do
+--             i+=1
+--             v,l[i]=l[i],v
+--         end
+--         l[1]=val
+--         return i
+--     end
+
+--     local cache,cache_bits=0,0
+--     function putbit(bval)
+--      cache=cache<<1|bval
+--      cache_bits+=1
+--         if cache_bits==8 then
+--             add(dest,cache)
+--             dest+=1
+--             cache,cache_bits=0,0
+--         end
+--     end
+
+--     function putval(val, bits)
+--         for i=bits-1,0,-1 do
+--             putbit(val>>i&1)
+--         end
+--     end
+
+--     function putnum(val)
+--         local bits = 0
+--         repeat
+--             bits += 1
+--             local mx=(1<<bits)-1
+--             local vv=min(val,mx)
+--             putval(vv,bits)
+--             val -= vv
+--         until vv<mx
+--     end
+
+
+--     -- first_used
+
+--     local el={}
+--     local found={}
+--     local highest=0
+--     for y=y0,y0+h-1 do
+--         for x=x0,x0+w-1 do
+--             c=vget(x,y)
+--             if not found[c] then
+--                 found[c]=true
+--                 add(el,c)
+--                 highest=max(highest,c)
+--             end
+--         end
+--     end
+
+--     -- header
+
+--     local bits=1
+--     while highest >= 1<<bits do
+--         bits+=1
+--     end
+
+--     putnum(w-1)
+--     putnum(h-1)
+--     putnum(bits-1)
+--     putnum(#el-1)
+--     for i=1,#el do
+--         putval(el[i],bits)
+--     end
+
+
+--     -- data
+
+--     local pr={} -- predictions
+
+--     local dat={}
+
+--     for y=y0,y0+h-1 do
+--         for x=x0,x0+w-1 do
+--             local v=vget(x,y)
+
+--             local a=y>y0 and vget(x,y-1) or 0
+
+--             -- create vlist if needed
+--             local l=pr[a] or {unpack(el)}
+--             pr[a]=l
+
+--             -- add to vlist
+--             add(dat,vlist_val(l,v))
+           
+--             -- and to running list
+--             vlist_val(el, v)
+--         end
+--     end
+
+--     -- write
+--     -- store bit-0 as runtime len
+--     -- start of each run
+
+--     local nopredict
+--     local pos=1
+
+--     while pos <= #dat do
+--         -- count length
+--         local pos0=pos
+
+--         if nopredict then
+--             while dat[pos]!=1 and pos<=#dat do
+--                 pos+=1
+--             end
+--         else
+--             while dat[pos]==1 and pos<=#dat do
+--                 pos+=1
+--             end
+--         end
+
+--         local splen = pos-pos0
+--         putnum(splen-1)
+
+--         if nopredict then
+--             -- values will all be >= 2
+--             while pos0 < pos do
+--                 putnum(dat[pos0]-2)
+--                 pos0+=1
+--             end
+--         end
+
+--         nopredict=not nopredict
+--     end
+
+--     return cache
+-- end

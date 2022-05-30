@@ -1,6 +1,9 @@
 # Morespriteshorn
 
-a modified version of everhorn that allows you to use the bottom tile pages for sprites instead of mapdata, and also allows you to change the exit direction of a level
+a modified version of everhorn that adds some extra features such as encoding the mapdata as base256 to save extra space,
+allowing you to set the exit direction of the level, and allow the bottom half of gfx to be used for additional sprites 
+
+
 
 get started by using morespritescore.p8 instead of evercore.p8 as a base, and open that in the editor
 
@@ -12,7 +15,8 @@ to change the exit type, press r to rename the level, and change the value of th
 3 - exit from the bottom
 
 
-**WARNING**
+**WARNING:**
+
 this is an extremely buggy patch, be careful
 
 if you decide to use the bottom tile pages for sprites, they can't be used for mapdata. place mapdata levels in the top half of the map instead.
@@ -22,7 +26,7 @@ ping me on discord (@CoolElectronics#4683) if anything breaks
 
 
 
-i'm planning on adding support for a simple hex compression algorithim later if i feel like it
+i'm planning on adding support for px8ing the mapdata and mayybe hexloading sprites if i feel like it
 
 
 
