@@ -2,4 +2,3 @@ src/*.so
 src/*.p8
 src/filedialog.py
 build
-build copy
