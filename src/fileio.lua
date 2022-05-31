@@ -310,7 +310,6 @@ function loadpico8(filename)
     local sections = {}
     local cursec = nil
     for line in cr_file_lines(file) do
-        print(line)
         local sec = string.match(line, "^__(%a+)__$")
         if sec then
             cursec = sec
@@ -404,7 +403,11 @@ function loadpico8(filename)
 
 
     
-    for i=1,#mapdata do
+    for i,v in pairs(mapdata) do
+        print("adjks")
+        if not (mapdata[i] == nil) then 
+
+
         local cvdata = ""
         -- convert to base256
         for index=1, utf8.len(mapdata[i]) do
@@ -414,38 +417,51 @@ function loadpico8(filename)
             cvdata = cvdata..tohex(tonumber(ords[idx])-1)
         end
         print("len is ".. string.len(cvdata))
-        -- unpack zeros
 
+
+
+        -- unpack zeros
+        local ndt = ""
         local index = 1
         while index < string.len(cvdata) do
-            print("THHE INDEX IS"..index)
             local tile = fromhex(string.sub(cvdata,index,index+1))
             if tile == 0 then
-                print("decompressing space")
                 local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
-                print(amount)
-                local expanded = ""
+                local constructed = ""
                 for exp=0,amount do
-                    expanded = expanded.."00"
+                    constructed = constructed.."00"
                 end
-                print(index)
-                local z = string.sub(cvdata,1,index-1)
-                if index == 1 then
-                    z = ""
-                end
-                print("expaneed len is"..string.len(expanded))
-                cvdata = z..expanded..string.sub(cvdata,index + string.len(expanded),string.len(cvdata))
-                index = index + string.len(expanded) - 1
-                print(cvdata)
-                print(index)
+                ndt = ndt..constructed
+                index = index + 2
+            else
+                ndt = ndt..string.sub(cvdata,index,index+1)
             end
-
             index = index + 2
         end
+        --     if tile == 0 then
+        --         print("decompressing space")
+        --         print(amount)
+        --         local expanded = ""
+        --         for exp=0,amount do
+        --             expanded = expanded.."00"
+        --         end
+        --         print(index)
+        --         local z = string.sub(cvdata,1,index-1)
+        --         if index == 1 then
+        --             z = ""
+        --         end
+        --         print("expaneed len is"..string.len(expanded))
+        --         cvdata = z..expanded..string.sub(cvdata,index + string.len(expanded),string.len(cvdata))
+        --         index = index + string.len(expanded) - 1
+        --         print(cvdata)
+        --         print(index)
+        --     end
 
-        mapdata[i] = cvdata
-        print("final mpdt")
-        print(cvdata)
+        --     index = index + 2
+        -- end
+
+        mapdata[i] = ndt
+    end
     end
 
 
@@ -588,8 +604,9 @@ function savePico8(filename)
     --     print(chars[i])
     -- end
     print("here is the thing")
-    for i,v in ipairs(mapdata) do
-
+    for i,v in pairs(mapdata) do
+        if not (mapdata[i] == nil) then 
+            print("not nil, doing stuff")
         local newmapdata = ""
         local index = 1
         while index < string.len(mapdata[i])+1 do
@@ -597,11 +614,12 @@ function savePico8(filename)
             if tile == 0 then
 
                 local start = index
-
+                -- local skip = false
                 print("found compressable space")
                 while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
                     index = index + 2
                     if ((index - start) / 2 - 1) >= 254 then
+                            -- skip = true
                         break
                     end
                 end
@@ -610,6 +628,9 @@ function savePico8(filename)
 
                 print(mapdata[i])
                 print(index)
+                if skip then
+                    index = index + 2
+                end
             else
                 newmapdata = newmapdata..tohex(tile)
                 index = index + 2
@@ -618,14 +639,14 @@ function savePico8(filename)
 
         mapdata[i] = newmapdata
 
-        for index=1, string.len(mapdata[i]) do
-            print(string.sub(mapdata[i],index,index))
+        for rindex=1, string.len(mapdata[i]) do
+            print(string.sub(mapdata[i],rindex,rindex))
         end
         print("asdkasldkasl;")
         local cvdata = ""
 
-        for index=1, string.len(mapdata[i]),2 do
-            local r = string.sub(mapdata[i],index,index+1)
+        for xindex=1, string.len(mapdata[i]),2 do
+            local r = string.sub(mapdata[i],xindex,xindex+1)
             print(r)
             local idx = fromhex(r)
             print(idx)
@@ -633,8 +654,10 @@ function savePico8(filename)
             -- print(chars[num])
             cvdata = cvdata..chars[idx+1]
         end
+        print("cvdata is "..cvdata)
         mapdata[i] = cvdata
         -- print(mapdata[i])
+    end
     end
 
 
