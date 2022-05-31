@@ -261,7 +261,12 @@ ords={}
 for k,v in pairs(chars) do
    ords[v]=k
 end
-
+--  fix for strange behavior with backslashes
+ords[95] = "\\\\"
+ords[37] = "\\\""
+ords[16] = "\\\r"
+ords[13] = "\\\n"
+ords[12] = "\\\t"
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
 end
@@ -396,18 +401,55 @@ function loadpico8(filename)
             levels, mapdata = env.levels, env.mapdata
         end
     end
-    print(ords["¹"])
 
+
+    
     for i=1,#mapdata do
         local cvdata = ""
+        -- convert to base256
         for index=1, utf8.len(mapdata[i]) do
             local offset = utf8.offset(mapdata[i],index)
             local nextstart = utf8.offset(mapdata[i],index+1)
             local idx = string.sub(mapdata[i],offset,nextstart -1)
             cvdata = cvdata..tohex(tonumber(ords[idx])-1)
         end
+        print("len is ".. string.len(cvdata))
+        -- unpack zeros
+
+        local index = 1
+        while index < string.len(cvdata) do
+            print("THHE INDEX IS"..index)
+            local tile = fromhex(string.sub(cvdata,index,index+1))
+            if tile == 0 then
+                print("decompressing space")
+                local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
+                print(amount)
+                local expanded = ""
+                for exp=0,amount do
+                    expanded = expanded.."00"
+                end
+                print(index)
+                local z = string.sub(cvdata,1,index-1)
+                if index == 1 then
+                    z = ""
+                end
+                print("expaneed len is"..string.len(expanded))
+                cvdata = z..expanded..string.sub(cvdata,index + string.len(expanded),string.len(cvdata))
+                index = index + string.len(expanded) - 1
+                print(cvdata)
+                print(index)
+            end
+
+            index = index + 2
+        end
+
         mapdata[i] = cvdata
+        print("final mpdt")
+        print(cvdata)
     end
+
+
+
 
     mapdata = mapdata or {}
 
@@ -546,7 +588,36 @@ function savePico8(filename)
     --     print(chars[i])
     -- end
     print("here is the thing")
-    for i=1,#mapdata do
+    for i,v in ipairs(mapdata) do
+
+        local newmapdata = ""
+        local index = 1
+        while index < string.len(mapdata[i])+1 do
+            local tile = fromhex(string.sub(mapdata[i],index,index+1))
+            if tile == 0 then
+
+                local start = index
+
+                print("found compressable space")
+                while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
+                    index = index + 2
+                    if ((index - start) / 2 - 1) >= 254 then
+                        break
+                    end
+                end
+
+                newmapdata = newmapdata.."00"..tohex(((index - start) / 2)-1)
+
+                print(mapdata[i])
+                print(index)
+            else
+                newmapdata = newmapdata..tohex(tile)
+                index = index + 2
+            end
+        end
+
+        mapdata[i] = newmapdata
+
         for index=1, string.len(mapdata[i]) do
             print(string.sub(mapdata[i],index,index))
         end
@@ -647,7 +718,7 @@ function savePico8(filename)
 
     local cartdata=table.concat(out, "\n")
     -- write to levels table without overwriting the code
-
+    print(dumplua(mapdata))
     cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
     cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(mapdata).."%2")
 
