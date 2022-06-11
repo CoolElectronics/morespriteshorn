@@ -139,7 +139,7 @@ chars = {
 "☉",
 "웃",
 "⌂",
-"⬅️",
+"⬅",
 "😐",
 "♪",
 "🅾️",
@@ -262,11 +262,11 @@ for k,v in pairs(chars) do
    ords[v]=k
 end
 --  fix for strange behavior with backslashes
-ords[95] = "\\\\"
-ords[37] = "\\\""
-ords[16] = "\\\r"
-ords[13] = "\\\n"
-ords[12] = "\\\t"
+chars[92] = "\\\\"
+chars[34] = "\\\""
+chars[13] = "\\\r"
+chars[10] = "\\\n"
+chars[9] = "\\\t"
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
 end
@@ -405,6 +405,7 @@ function loadpico8(filename)
     
     for i,v in pairs(mapdata) do
         print("adjks")
+
         if not (mapdata[i] == nil) then 
 
 
@@ -414,7 +415,13 @@ function loadpico8(filename)
             local offset = utf8.offset(mapdata[i],index)
             local nextstart = utf8.offset(mapdata[i],index+1)
             local idx = string.sub(mapdata[i],offset,nextstart -1)
-            cvdata = cvdata..tohex(tonumber(ords[idx])-1)
+            if ords[idx] == nil then
+                print("thats an error")
+                print(idx)
+                cvdata = cvdata.."00"
+            else
+                cvdata = cvdata..tohex(tonumber(ords[idx])-1)
+            end
         end
         print("len is ".. string.len(cvdata))
 
@@ -438,6 +445,8 @@ function loadpico8(filename)
             end
             index = index + 2
         end
+
+        -- prevent crashes
         --     if tile == 0 then
         --         print("decompressing space")
         --         print(amount)
@@ -456,9 +465,10 @@ function loadpico8(filename)
         --         print(cvdata)
         --         print(index)
         --     end
-
+        
         --     index = index + 2
         -- end
+        -- if string.len(ndt) < levels[i] 
 
         mapdata[i] = ndt
     end
@@ -490,6 +500,12 @@ function loadpico8(filename)
             x, y, w, h = tonumber(x), tonumber(y), tonumber(w), tonumber(h)
             if x and y and w and h then -- this confirms they're there and they're numbers
                 data.roomBounds[n] = {x=x*128, y=y*128, w=w*16, h=h*16, title=title,exit=exit}
+                if not (mapdata[n] == nil) then
+                    while string.len(mapdata[n])/2 < w*16 * h*16 do
+                        print("preventing crash")
+                        mapdata[n] = mapdata[n].."00"
+                    end
+                end
             else
                 print("wat", s)
             end
@@ -742,8 +758,9 @@ function savePico8(filename)
     local cartdata=table.concat(out, "\n")
     -- write to levels table without overwriting the code
     print(dumplua(mapdata))
+    local dump = dumplua(mapdata):gsub("%%","%%%%")
     cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
-    cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(mapdata).."%2")
+    cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dump.."%2")
 
     --remove playtesting inject if one already exists:
     cartdata = cartdata:gsub("(%-%-@begin.*)local __init.-\n(.*%-%-@end)","%1".."%2")
