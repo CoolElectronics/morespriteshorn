@@ -139,7 +139,7 @@ chars = {
 "☉",
 "웃",
 "⌂",
-"⬅",
+"⬅️",
 "😐",
 "♪",
 "🅾️",
@@ -262,11 +262,11 @@ for k,v in pairs(chars) do
    ords[v]=k
 end
 --  fix for strange behavior with backslashes
-chars[92] = "\\\\"
-chars[34] = "\\\""
-chars[13] = "\\\r"
-chars[10] = "\\\n"
-chars[9] = "\\\t"
+-- chars[92] = "\\\\"
+-- chars[34] = "\\\""
+-- chars[13] = "\\\r"
+-- chars[10] = "\\\n"
+-- chars[9] = "\\\t"
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
 end
@@ -385,66 +385,102 @@ function loadpico8(filename)
 
     -- code: look for the magic comment
     local code = table.concat(sections["lua"], "\n")
-    local evh = string.match(code, "%-%-@begin([^@]+)%-%-@end")
+    local evh = string.match(code, "%-%-@begin(.+)%-%-@end")
     local levels, mapdata
     if evh then
         -- cut out comments - loadstring doesn't parse them for some reason
         evh = string.gsub(evh, "%-%-[^\n]*\n", "")
         evh = string.gsub(evh, "//[^\n]*\n", "")
         local chunk, err = loadstring(evh)
-        print("loading mapdata")
         if not err then
             local env = {}
             chunk = setfenv(chunk, env)
             chunk()
             levels, mapdata = env.levels, env.mapdata
+        else
+            print("error")
+            print(err)
         end
+    else
+        print("something went very wrong")
     end
 
 
     
     for i,v in pairs(mapdata) do
-        print("adjks")
 
         if not (mapdata[i] == nil) then 
 
-
         local cvdata = ""
         -- convert to base256
-        for index=1, utf8.len(mapdata[i]) do
+        local idh = 0
+        local index=1
+        while index < utf8.len(mapdata[i])+1 do
             local offset = utf8.offset(mapdata[i],index)
             local nextstart = utf8.offset(mapdata[i],index+1)
             local idx = string.sub(mapdata[i],offset,nextstart -1)
+
+            if idx == "⬇" then 
+                print("weird char detected")
+                idx = "⬇️"
+                index = index + 1
+            end
+            if idx == "🅾" then
+                print("another werid char")
+                idx = "🅾️"
+                index = index + 1
+            end
+            if idx == "➡" then
+                idx = "➡️"
+                index = index + 1
+            end
+            if idx == "⬆" then
+                idx = "⬆️"
+                index = index + 1
+            end
+            if idx == "⬅" then
+                idx = "⬅️"
+                index = index + 1
+            end
+            if ords[idx] == "⬇️" then
+                print("wtf")
+            end
             if ords[idx] == nil then
-                print("thats an error")
+                print("char not in dataset")
                 print(idx)
                 cvdata = cvdata.."00"
             else
                 cvdata = cvdata..tohex(tonumber(ords[idx])-1)
+                idh = idh + 1
+                if idh == 256 then
+                    idh = 0
+                end
+                -- tohex(tonumber(ords[idx])-1)
             end
+            index = index + 1
         end
-        print("len is ".. string.len(cvdata))
+        -- print("len is ".. string.len(cvdata))
 
 
 
         -- unpack zeros
-        local ndt = ""
-        local index = 1
-        while index < string.len(cvdata) do
-            local tile = fromhex(string.sub(cvdata,index,index+1))
-            if tile == 0 then
-                local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
-                local constructed = ""
-                for exp=0,amount do
-                    constructed = constructed.."00"
-                end
-                ndt = ndt..constructed
-                index = index + 2
-            else
-                ndt = ndt..string.sub(cvdata,index,index+1)
-            end
-            index = index + 2
-        end
+        -- local ndt = ""
+        -- local index = 1
+        -- while index < string.len(cvdata) do
+        --     local tile = fromhex(string.sub(cvdata,index,index+1))
+        --     if tile == 0 then
+        --         local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
+        --         local constructed = ""
+        --         for exp=0,amount do
+        --             constructed = constructed.."00"
+        --         end
+        --         ndt = ndt..constructed
+        --         index = index + 2
+        --     else
+        --         ndt = ndt..string.sub(cvdata,index,index+1)
+        --     end
+        --     index = index + 2
+        -- end
 
         -- prevent crashes
         --     if tile == 0 then
@@ -470,11 +506,9 @@ function loadpico8(filename)
         -- end
         -- if string.len(ndt) < levels[i] 
 
-        mapdata[i] = ndt
+        mapdata[i] = cvdata
     end
     end
-
-
 
 
     mapdata = mapdata or {}
@@ -522,6 +556,7 @@ function loadpico8(filename)
     -- load mapdata
     if mapdata then
         for n, levelstr in pairs(mapdata) do
+            print("found a hex level to load")
             print(levelstr)
             local b = data.roomBounds[n]
             if b then
@@ -562,6 +597,10 @@ end
 function openPico8(filename)
     newProject()
 
+    -- print("⬇️")
+    -- print(ords["⬇️"])
+    -- print(chars[131])
+    -- print(chars)
     -- loads into global p8data as well, for spritesheet
     p8data = loadpico8(filename)
     project.rooms = p8data.rooms
@@ -621,56 +660,58 @@ function savePico8(filename)
     -- end
     print("here is the thing")
     for i,v in pairs(mapdata) do
+        print(i)
+        print(v)
         if not (mapdata[i] == nil) then 
             print("not nil, doing stuff")
-        local newmapdata = ""
-        local index = 1
-        while index < string.len(mapdata[i])+1 do
-            local tile = fromhex(string.sub(mapdata[i],index,index+1))
-            if tile == 0 then
+        -- local newmapdata = ""
+        -- local index = 1
+        -- while index < string.len(mapdata[i])+1 do
+        --     local tile = fromhex(string.sub(mapdata[i],index,index+1))
+        --     if tile == 0 then
 
-                local start = index
-                -- local skip = false
-                print("found compressable space")
-                while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
-                    index = index + 2
-                    if ((index - start) / 2 - 1) >= 254 then
-                            -- skip = true
-                        break
-                    end
-                end
+        --         local start = index
+        --         -- local skip = false
+        --         print("found compressable space")
+        --         while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
+        --             index = index + 2
+        --             if ((index - start) / 2 - 1) >= 254 then
+        --                     -- skip = true
+        --                 break
+        --             end
+        --         end
 
-                newmapdata = newmapdata.."00"..tohex(((index - start) / 2)-1)
+        --         newmapdata = newmapdata.."00"..tohex(((index - start) / 2)-1)
 
-                print(mapdata[i])
-                print(index)
-                if skip then
-                    index = index + 2
-                end
-            else
-                newmapdata = newmapdata..tohex(tile)
-                index = index + 2
-            end
-        end
+        --         print(mapdata[i])
+        --         print(index)
+        --         if skip then
+        --             index = index + 2
+        --         end
+        --     else
+        --         newmapdata = newmapdata..tohex(tile)
+        --         index = index + 2
+        --     end
+        -- end
 
-        mapdata[i] = newmapdata
+        -- mapdata[i] = newmapdata
 
         for rindex=1, string.len(mapdata[i]) do
-            print(string.sub(mapdata[i],rindex,rindex))
+            -- print(string.sub(mapdata[i],rindex,rindex))
         end
-        print("asdkasldkasl;")
+        -- print("asdkasldkasl;")
         local cvdata = ""
 
         for xindex=1, string.len(mapdata[i]),2 do
             local r = string.sub(mapdata[i],xindex,xindex+1)
-            print(r)
+            -- print(r)
             local idx = fromhex(r)
-            print(idx)
+            -- print(idx)
             -- local idx = string.sub(mapdata[i],index,index)
             -- print(chars[num])
             cvdata = cvdata..chars[idx+1]
         end
-        print("cvdata is "..cvdata)
+        -- print("cvdata is "..cvdata)
         mapdata[i] = cvdata
         -- print(mapdata[i])
     end
@@ -724,7 +765,7 @@ function savePico8(filename)
         end
     end
 
-    print(labelstart)
+    -- print(labelstart)
 
     local gfxtable = {}
     for j = gfxstart, labelstart-1 do
@@ -757,11 +798,15 @@ function savePico8(filename)
 
     local cartdata=table.concat(out, "\n")
     -- write to levels table without overwriting the code
-    print(dumplua(mapdata))
+    -- print(dumplua(mapdata))
     local dump = dumplua(mapdata):gsub("%%","%%%%")
-    cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
-    cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dump.."%2")
+    local builtdat = "--@begin\n";
+    builtdat = builtdat.."levels="..dumplua(levels).."\n"
+    builtdat = builtdat.."mapdata="..dump.."\n"
+    -- cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
+    -- cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dump.."%2")
 
+    cartdata = cartdata:gsub("%-%-@begin(.+)%-%-@end",builtdat.."\n--@end")
     --remove playtesting inject if one already exists:
     cartdata = cartdata:gsub("(%-%-@begin.*)local __init.-\n(.*%-%-@end)","%1".."%2")
     if app.playtesting and app.room then

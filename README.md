@@ -22,6 +22,7 @@ this is an extremely buggy patch, be careful
 if you decide to use the bottom tile pages for sprites, they can't be used for mapdata. place mapdata levels in the top half of the map instead.
 hex loaded levels are unaffected and can be placed wherever.
 
+sprite number 256 cannot be used as the p8scii charset only has 255 characters, you will get a "attempt to concatenate a nil value" error
 ping me on discord (@CoolElectronics#4683) if anything breaks
 
 
@@ -81,3 +82,9 @@ Go to the Releases section at the top of the page.
 * * **Select** - basic selection tool, click and drag to select a rectangle, then you can move it, place it, copy or cut it with **Ctrl+C**, **Ctrl+X** and paste with **Ctrl+V**.
 * **Tab** toggles **playtesting mode**. When it's enabled, saving a cart will also inject a line of code that spawns you right in the current room and disables music. (conveniently, in PICO-8 you can press **Ctrl+R** to restart the cart and it will reload the map as well!). Press Tab again to enable **2 dashes**.
 * **CTRL+H** - shows/hides **garbage tiles** on the tool panel
+
+
+## rant
+despite calling it base 256 this whole time, the p8scii format only has 255 characters, meaning the last sprite can't be used. if this was the only issue, it wouldn't be that big of a deal, but for some reason lua's utf8 support is weird, and the character ⬇ is not the same as the character ⬇ because reasons, the character ゜takes up 2 utf characters and only 1 normal character, and the character 🅾️ is longer than any other one
+
+why does the regex do [^@]+ instead of .+
