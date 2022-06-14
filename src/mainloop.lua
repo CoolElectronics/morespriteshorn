@@ -169,7 +169,7 @@ function love.update(dt)
     if app.renameRoom then
         local room = app.renameRoom
         
-        local w, h = 200*global_scale, 250*global_scale
+        local w, h = 200*global_scale, 400*global_scale
         if ui:windowBegin("Rename room", app.W/2 - w/2, app.H/2 - h/2, w, h, {"title", "border", "closable", "movable"}) then
             local x,y=div8(room.x),div8(room.y)
             local fits_on_map=x>=0 and x+room.w<=128 and y>=0 and y+room.h<=64
@@ -195,16 +195,32 @@ function love.update(dt)
             local state, changed
             -- ui:editFocus()
             state, changed = ui:edit("simple", app.renameRoomVTable.name)
-            ui:label("exit type: 0 - top, 1 - right")
-            ui:label("2 - left, 3 - bottom")
-            local state2, changed2
-            -- ui:editFocus()
-            state2, changed2 = ui:edit("simple", app.renameRoomVTable.exit)
-            
+            -- ui:label("exit type: 0 - top, 1 - right")
+            -- ui:label("2 - left, 3 - bottom")
+
+            ui:checkbox("set custom exit",app.renameRoomVTable.customexit)
+
+            if app.renameRoomVTable.customexit.value then
+                -- local state2, changed2
+                -- state2, changed2 = ui:edit("simple", app.renameRoomVTable.exit)
+
+                ui:label("top")
+                ui:edit("simple",app.renameRoomVTable.top)
+                ui:label("right")
+                ui:edit("simple",app.renameRoomVTable.right)
+                ui:label("left")
+                ui:edit("simple",app.renameRoomVTable.left)
+                ui:label("bottom")
+                ui:edit("simple",app.renameRoomVTable.bottom)
+            end
             
             if ui:button("OK") or app.enterPressed then
                 room.title = app.renameRoomVTable.name.value
-                room.exit = app.renameRoomVTable.exit.value
+                room.customexit = app.renameRoomVTable.customexit.value
+                room.top = app.renameRoomVTable.top.value
+                room.right = app.renameRoomVTable.right.value
+                room.left = app.renameRoomVTable.left.value
+                room.bottom = app.renameRoomVTable.bottom.value
                 room.hex = app.renameRoomVTable.hex.value
                 app.renameRoom = nil
             end

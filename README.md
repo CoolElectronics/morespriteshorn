@@ -7,12 +7,8 @@ allowing you to set the exit direction of the level, and allow the bottom half o
 
 get started by using morespritescore.p8 instead of evercore.p8 as a base, and open that in the editor
 
-to change the exit type, press r to rename the level, and change the value of the second input field from 0-3
+to set a custom exit, press r to rename the level, and change the value of the direction input field to the id number of the level you want it to transition to, and if you don't want that exit to be usable, change it to nil
 
-0 - exit from the top
-1 - exit from the right
-2 - exit from the left
-3 - exit from the bottom
 
 
 **WARNING:**
@@ -22,7 +18,6 @@ this is an extremely buggy patch, be careful
 if you decide to use the bottom tile pages for sprites, they can't be used for mapdata. place mapdata levels in the top half of the map instead.
 hex loaded levels are unaffected and can be placed wherever.
 
-sprite number 256 cannot be used as the p8scii charset only has 255 characters, you will get a "attempt to concatenate a nil value" error
 ping me on discord (@CoolElectronics#4683) if anything breaks
 
 
@@ -85,6 +80,8 @@ Go to the Releases section at the top of the page.
 
 
 ## rant
-despite calling it base 256 this whole time, the p8scii format only has 255 characters, meaning the last sprite can't be used. if this was the only issue, it wouldn't be that big of a deal, but for some reason lua's utf8 support is weird, and the character ⬇ is not the same as the character ⬇ because reasons, the character ゜takes up 2 utf characters and only 1 normal character, and the character 🅾️ is longer than any other one
+lua's utf8 support is weird, and the character ⬇ is not the same as the character ⬇ because reasons, the character ゜takes up 2 utf characters and only 1 normal character, and the character 🅾️ is longer than any other one
 
 why does the regex do [^@]+ instead of .+
+
+this project is so unstable

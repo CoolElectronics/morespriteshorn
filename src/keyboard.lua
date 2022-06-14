@@ -223,7 +223,11 @@ function love.keypressed(key, scancode, isrepeat)
 		--end
 		--room.title = title
 		room.title = ""
-        room.exit = 0
+        room.customexit = false
+        room.top = "nil"
+        room.right = "nil"
+        room.bottom = "nil"
+        room.left = "nil"
         
         table.insert(project.rooms, room)
         app.room = #project.rooms
@@ -257,7 +261,11 @@ function love.keyreleased(key, scancode)
 		app.renameRoom = activeRoom()
         app.renameRoomVTable = { name = {value = app.renameRoom.title},
                                  hex  = {value = app.renameRoom.hex},
-                                 exit = {value = app.renameRoom.exit}
+                                 customexit = {value = app.renameRoom.customexit},
+                                 top = {value = app.renameRoom.top},
+                                 right = {value = app.renameRoom.right},
+                                 left = {value = app.renameRoom.left},
+                                 bottom = {value = app.renameRoom.bottom},
                                }
     end
 end

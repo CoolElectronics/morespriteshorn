@@ -1,6 +1,7 @@
 -- functions to read lines correctly for \r\n line endings
 utf8 = require("utf8")
 chars = {
+"\0",
 "¹",
 "²",
 "³",
@@ -261,12 +262,6 @@ ords={}
 for k,v in pairs(chars) do
    ords[v]=k
 end
---  fix for strange behavior with backslashes
--- chars[92] = "\\\\"
--- chars[34] = "\\\""
--- chars[13] = "\\\r"
--- chars[10] = "\\\n"
--- chars[9] = "\\\t"
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
 end
@@ -282,6 +277,7 @@ end
 -- file handling
 
 function loadpico8(filename)
+    print("➡" == "➡️")
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     local file, err = io.open(filename, "rb")
@@ -530,10 +526,11 @@ function loadpico8(filename)
     -- load levels
     if levels[1] then
         for n, s in pairs(levels) do
-            local x, y, w, h, title,exit = string.match(s, "^([^,]*),([^,]*),([^,]*),([^,]*),?([^,]*),([^,]*)$")
+            local x, y, w, h, title,customexit,top,right,left,bottom = string.match(s, "^([^,]*),([^,]*),([^,]*),([^,]*),?([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)$")
             x, y, w, h = tonumber(x), tonumber(y), tonumber(w), tonumber(h)
+            local customexit = customexit == "true"
             if x and y and w and h then -- this confirms they're there and they're numbers
-                data.roomBounds[n] = {x=x*128, y=y*128, w=w*16, h=h*16, title=title,exit=exit}
+                data.roomBounds[n] = {x=x*128, y=y*128, w=w*16, h=h*16, title=title,customexit=customexit,top=top,right=right,left=left,bottom=bottom}
                 if not (mapdata[n] == nil) then
                     while string.len(mapdata[n])/2 < w*16 * h*16 do
                         print("preventing crash")
@@ -547,7 +544,7 @@ function loadpico8(filename)
     else
         for J = 0, 3 do
             for I = 0, 7 do
-                local b = {x = I*128, y = J*128, w = 16, h = 16, title=""}
+                local b = {x = I*128, y = J*128, w = 16, h = 16, title="",customexit=false,top="nil",right="nil",left="nil",bottom="nil"}
                 table.insert(data.roomBounds, b)
             end
         end
@@ -563,7 +560,11 @@ function loadpico8(filename)
                 local room = newRoom(b.x, b.y, b.w, b.h)
                 loadroomdata(room, levelstr)
                 room.title = b.title
-                room.exit = b.exit
+                room.customexit = b.customexit
+                room.top = b.top
+                room.right = b.right
+                room.left = b.left
+                room.bottom = b.bottom
                 data.rooms[n] = room
             end
         end
@@ -575,7 +576,12 @@ function loadpico8(filename)
             local room = newRoom(b.x, b.y, b.w, b.h)
             room.hex=false
             room.title = b.title
-            room.exit = b.exit
+            room.title = b.title
+            room.customexit = b.customexit
+            room.top = b.top
+            room.right = b.right
+            room.left = b.left
+            room.bottom = b.bottom
 
             for i = 0, b.w - 1 do
                 for j = 0, b.h - 1 do
@@ -597,10 +603,6 @@ end
 function openPico8(filename)
     newProject()
 
-    -- print("⬇️")
-    -- print(ords["⬇️"])
-    -- print(chars[131])
-    -- print(chars)
     -- loads into global p8data as well, for spritesheet
     p8data = loadpico8(filename)
     project.rooms = p8data.rooms
@@ -647,7 +649,7 @@ function savePico8(filename)
     local levels, mapdata = {}, {}
     for n = 1, #project.rooms do
         local room = project.rooms[n]
-        levels[n] = string.format("%g,%g,%g,%g,%s,%s", room.x/128, room.y/128, room.w/16, room.h/16, room.title,room.exit)
+        levels[n] = string.format("%g,%g,%g,%g,%s,%s,%s,%s,%s,%s", room.x/128, room.y/128, room.w/16, room.h/16, room.title,room.customexit,room.top,room.right,room.left,room.bottom)
 
         if room.hex then
             mapdata[n] = dumproomdata(room)
