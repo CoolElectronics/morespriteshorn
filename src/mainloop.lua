@@ -92,7 +92,6 @@ function love.load(args)
 end
 
 function love.update(dt)
-    app.showGarbageTiles = true
     app.W, app.H = love.graphics.getDimensions()
     local rpw = app.W * 0.10 -- room panel width
     app.left, app.top = rpw, 0
@@ -139,10 +138,15 @@ function love.update(dt)
 			ui:layoutRow("static", 25*global_scale, 100*global_scale, 2)
 			if ui:selectable("Brush", app.tool == "brush") then app.tool = "brush" end
 			if ui:selectable("Rectangle", app.tool == "rectangle") then app.tool = "rectangle" end
-			ui:layoutRow("static", 25*global_scale, 100*global_scale, 1)
+            
 			if ui:selectable("Select", app.tool == "select") then app.tool = "select" end
+           if ui:button("Settings") then
+            app.settings = true
+           end
+			ui:layoutRow("static", 25*global_scale, 100*global_scale, 1)
+
 			
-			for j = 0, app.showGarbageTiles and 15 or 7 do
+			for j = 0, project.moresprites and 15 or 7 do
 				ui:layoutRow("static", 8*tms, 8*tms, 16)
 				for i = 0, 15 do
 					local n = i + j*16
@@ -152,7 +156,9 @@ function love.update(dt)
 					end
 				end
 			end
-			
+			if ui:button("test") then
+                runtest()
+            end
 			ui:layoutRow("dynamic", 25*global_scale, 1)
             ui:label("Autotiles:")
             ui:layoutRow("static", 8*tms, 8*tms, #autotiles)
@@ -165,7 +171,23 @@ function love.update(dt)
 		end
 		ui:windowEnd()
 	end
-    
+    if app.settings then
+        local w, h = 200*global_scale, 400*global_scale
+        if ui:windowBegin("Cart Settings", app.W/2 - w/2, app.H/2 - h/2, w, h, {"title", "border", "closable", "movable"}) then
+            ui:layoutRow("dynamic",25*global_scale,1)
+            -- ui:s
+            -- ui:label("enabling moresprites mode will allow you to store extra sprites on ")
+            project.moresprites = ui:checkbox("Moresprites mode",project.moresprites)
+            -- ui:stylePop()
+            ui:layoutRow("dynamic", 25*global_scale, 1)
+            if ui:button("OK") or app.enterPressed then
+                app.settings = false
+            end
+        else
+            app.settings = false
+        end
+        ui:windowEnd()
+    end
     if app.renameRoom then
         local room = app.renameRoom
         

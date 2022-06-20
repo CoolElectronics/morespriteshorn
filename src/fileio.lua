@@ -1,7 +1,6 @@
 -- functions to read lines correctly for \r\n line endings
 utf8 = require("utf8")
 chars = {
-"\0",
 "¹",
 "²",
 "³",
@@ -256,12 +255,22 @@ chars = {
 "ュ",
 "ョ",
 "◜",
-"◝"
+"◝",
+"\0",
 }
 ords={}
 for k,v in pairs(chars) do
    ords[v]=k
 end
+
+edgecases = {
+    ["⬇"] = "⬇️",
+    ["🅾"] = "🅾️",
+    ["➡"] = "➡️",
+    ["⬆"] = "⬆️",
+    ["⬅"] = "⬅️"
+} -- ^^^^^^^^^^ these are different characters. base256 :weirdelie:
+
 local function cr_lines(s)
     return s:gsub('\r\n?', '\n'):gmatch('(.-)\n')
 end
@@ -277,7 +286,6 @@ end
 -- file handling
 
 function loadpico8(filename)
-    print("➡" == "➡️")
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     local file, err = io.open(filename, "rb")
@@ -385,14 +393,18 @@ function loadpico8(filename)
     local levels, mapdata
     if evh then
         -- cut out comments - loadstring doesn't parse them for some reason
-        evh = string.gsub(evh, "%-%-[^\n]*\n", "")
-        evh = string.gsub(evh, "//[^\n]*\n", "")
+        -- evh = string.gsub(evh, "%-%-[^\n]*\n", "")
+        -- evh = string.gsub(evh, "//[^\n]*\n", "")
+        -- WHY WAS THIS LINE HERE COMMENTS ARE -- ANYWAY
+
         local chunk, err = loadstring(evh)
         if not err then
             local env = {}
             chunk = setfenv(chunk, env)
             chunk()
             levels, mapdata = env.levels, env.mapdata
+
+            data.moresprites = env.moresprites
         else
             print("error")
             print(err)
@@ -402,6 +414,7 @@ function loadpico8(filename)
     end
 
 
+    rawmap = dumplua(mapdata)
     
     for i,v in pairs(mapdata) do
 
@@ -415,31 +428,10 @@ function loadpico8(filename)
             local offset = utf8.offset(mapdata[i],index)
             local nextstart = utf8.offset(mapdata[i],index+1)
             local idx = string.sub(mapdata[i],offset,nextstart -1)
-
-            if idx == "⬇" then 
-                print("weird char detected")
-                idx = "⬇️"
+            
+            if edgecases[idx] ~= nil then 
+                idx = edgecases[idx]
                 index = index + 1
-            end
-            if idx == "🅾" then
-                print("another werid char")
-                idx = "🅾️"
-                index = index + 1
-            end
-            if idx == "➡" then
-                idx = "➡️"
-                index = index + 1
-            end
-            if idx == "⬆" then
-                idx = "⬆️"
-                index = index + 1
-            end
-            if idx == "⬅" then
-                idx = "⬅️"
-                index = index + 1
-            end
-            if ords[idx] == "⬇️" then
-                print("wtf")
             end
             if ords[idx] == nil then
                 print("char not in dataset")
@@ -460,23 +452,23 @@ function loadpico8(filename)
 
 
         -- unpack zeros
-        -- local ndt = ""
-        -- local index = 1
-        -- while index < string.len(cvdata) do
-        --     local tile = fromhex(string.sub(cvdata,index,index+1))
-        --     if tile == 0 then
-        --         local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
-        --         local constructed = ""
-        --         for exp=0,amount do
-        --             constructed = constructed.."00"
-        --         end
-        --         ndt = ndt..constructed
-        --         index = index + 2
-        --     else
-        --         ndt = ndt..string.sub(cvdata,index,index+1)
-        --     end
-        --     index = index + 2
-        -- end
+        local ndt = ""
+        local index = 1
+        while index < string.len(cvdata) do
+            local tile = fromhex(string.sub(cvdata,index,index+1))
+            if tile == 0 then
+                local amount = tonumber(fromhex(string.sub(cvdata,index+2,index+3)))
+                local constructed = ""
+                for exp=0,amount do
+                    constructed = constructed.."00"
+                end
+                ndt = ndt..constructed
+                index = index + 2
+            else
+                ndt = ndt..string.sub(cvdata,index,index+1)
+            end
+            index = index + 2
+        end
 
         -- prevent crashes
         --     if tile == 0 then
@@ -502,7 +494,7 @@ function loadpico8(filename)
         -- end
         -- if string.len(ndt) < levels[i] 
 
-        mapdata[i] = cvdata
+        mapdata[i] = ndt
     end
     end
 
@@ -549,12 +541,9 @@ function loadpico8(filename)
             end
         end
     end
-
     -- load mapdata
     if mapdata then
         for n, levelstr in pairs(mapdata) do
-            print("found a hex level to load")
-            print(levelstr)
             local b = data.roomBounds[n]
             if b then
                 local room = newRoom(b.x, b.y, b.w, b.h)
@@ -606,6 +595,7 @@ function openPico8(filename)
     -- loads into global p8data as well, for spritesheet
     p8data = loadpico8(filename)
     project.rooms = p8data.rooms
+    project.moresprites = p8data.moresprites
 
     app.openFileName = filename
 
@@ -655,53 +645,37 @@ function savePico8(filename)
             mapdata[n] = dumproomdata(room)
         end
     end
-    
-    -- for i=1,#chars do 
-    --     print(i)
-    --     print(chars[i])
-    -- end
-    print("here is the thing")
+    -- print(dumplua(mapdata))
     for i,v in pairs(mapdata) do
-        print(i)
-        print(v)
         if not (mapdata[i] == nil) then 
-            print("not nil, doing stuff")
-        -- local newmapdata = ""
-        -- local index = 1
-        -- while index < string.len(mapdata[i])+1 do
-        --     local tile = fromhex(string.sub(mapdata[i],index,index+1))
-        --     if tile == 0 then
+        local newmapdata = ""
+        local index = 1
+        while index < string.len(mapdata[i])+1 do
+            local tile = fromhex(string.sub(mapdata[i],index,index+1))
+            if tile == 0 then
 
-        --         local start = index
-        --         -- local skip = false
-        --         print("found compressable space")
-        --         while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
-        --             index = index + 2
-        --             if ((index - start) / 2 - 1) >= 254 then
-        --                     -- skip = true
-        --                 break
-        --             end
-        --         end
+                local start = index
+                while fromhex(string.sub(mapdata[i],index,index+1)) == 0 do
+                    index = index + 2
+                    if ((index - start) / 2 - 1) >= 254 then
+                            -- skip = true
+                        break
+                    end
+                end
 
-        --         newmapdata = newmapdata.."00"..tohex(((index - start) / 2)-1)
+                newmapdata = newmapdata.."00"..tohex(((index - start) / 2)-1)
 
-        --         print(mapdata[i])
-        --         print(index)
-        --         if skip then
-        --             index = index + 2
-        --         end
-        --     else
-        --         newmapdata = newmapdata..tohex(tile)
-        --         index = index + 2
-        --     end
-        -- end
-
-        -- mapdata[i] = newmapdata
-
-        for rindex=1, string.len(mapdata[i]) do
-            -- print(string.sub(mapdata[i],rindex,rindex))
+                if skip then
+                    index = index + 2
+                end
+            else
+                newmapdata = newmapdata..tohex(tile)
+                index = index + 2
+            end
         end
-        -- print("asdkasldkasl;")
+
+        mapdata[i] = newmapdata
+
         local cvdata = ""
 
         for xindex=1, string.len(mapdata[i]),2 do
@@ -718,10 +692,9 @@ function savePico8(filename)
         -- print(mapdata[i])
     end
     end
-
-
     -- map section
 
+    rawmap = dumplua(mapdata)
     -- start out by making sure both sections exist, and are sized to max size
 
 
@@ -802,9 +775,15 @@ function savePico8(filename)
     -- write to levels table without overwriting the code
     -- print(dumplua(mapdata))
     local dump = dumplua(mapdata):gsub("%%","%%%%")
+    -- :gsub("\\13","\\r"):gsub("\\013","\\r"):gsub("\\\\r","\\\\13")
+    -- removed this because it causes way too many edge cases
+
+
+    --:gsub("\\?13","\\r")
     local builtdat = "--@begin\n";
     builtdat = builtdat.."levels="..dumplua(levels).."\n"
     builtdat = builtdat.."mapdata="..dump.."\n"
+    builtdata = builtdat.."moresprites="..project.moresprites.."\n"
     -- cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
     -- cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dump.."%2")
 

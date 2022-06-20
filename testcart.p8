@@ -1326,14 +1326,14 @@ end
 
 --@begin
 levels={
-  "0,0,0.0625,0.0625,,false,nil,nil,nil,nil"
+  "0,0,0.3125,0.0625,,false,nil,nil,nil,nil"
 }
 mapdata={
-  "¹¹"
+  "「²▶¹¹そ"
 }
-moresprites=true
---@end
 
+--@end
+--\\\\rケ😐4xb
 --list of music switch triggers
 --assigned levels will start the tracks set here
 music_switches={

@@ -7,6 +7,9 @@ require 'room'
 require 'autotiles'
 
 
+print(dumplua(loadstring("//")))
+
+
 
 -- global constants
 psep = love.system.getOS() == "Windows" and "\\" or "/" -- path separator
@@ -31,8 +34,7 @@ function newProject()
         messageTimeLeft = nil,
         playtesting = false,
         showToolPanel = true,
-		showGarbageTiles=false,
-        
+        settings=false,
         -- history (undo stack)
         history = {},
         historyN = 0,
@@ -52,7 +54,8 @@ function newProject()
 		--print(app.font:getHeight())
     -- this is what goes into history and (mostly) gets saved
     project = {
-        rooms = {}, 
+        rooms = {},
+        moresprites = false,
         selection = nil,
     }
     
@@ -178,3 +181,4 @@ require 'fileio'
 require 'mainloop'
 require 'keyboard'
 require 'mouse'
+require 'test'
