@@ -367,6 +367,8 @@ function loadpico8(filename)
         end
     end
 
+
+
     data.map = {}
     for i = 0, 127  do
         data.map[i] = {}
@@ -376,13 +378,27 @@ function loadpico8(filename)
             data.map[i][j] = fromhex(s)
         end
         for j = 32, 63 do
-            local i_ = i%64
-            local j_ = i <= 63 and j*2 or j*2 + 1
-            local line = sections["gfx"][j_ + 1] or "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            local s = string.sub(line, 1 + 2*i_, 2 + 2*i_)
-            data.map[i][j] = fromhex_swapnibbles(s)
+            -- if project.moresprites then
+                local i_ = i%64
+                local j_ = i <= 63 and j*2 or j*2 + 1
+                local line = sections["gfx"][j_ + 1] or "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                local s = string.sub(line, 1 + 2*i_, 2 + 2*i_)
+                data.map[i][j] = fromhex_swapnibbles(s)
+            -- else
+                -- data.map[i][j] = 0
+            -- end
         end
     end
+    
+    local unwrappedmap = {}
+    for j=32,63 do
+        for i=0,127 do
+            unwrappedmap[#unwrappedmap+1] = data.map[i][j]
+        end
+    end
+    print(dumplua(px9.decompress(unwrappedmap)))
+    -- px9_decomp()
+    -- decomp here
 
     data.rooms = {}
     data.roomBounds = {}
@@ -583,6 +599,7 @@ function loadpico8(filename)
                 end
             end
 
+
             data.rooms[n] = room
         end
     end
@@ -767,8 +784,12 @@ function savePico8(filename)
         out[gfxstart+(j-32)*2+66] = string.sub(line, 129, 256)
     end
 
-    for j = gfxstart, labelstart-1 do
-        out[j] = gfxtable[j]
+    
+    --- here is the original patch
+    if project.moresprites then
+        for j = gfxstart, labelstart-1 do
+            out[j] = gfxtable[j]
+        end
     end
 
     local cartdata=table.concat(out, "\n")
@@ -783,7 +804,7 @@ function savePico8(filename)
     local builtdat = "--@begin\n";
     builtdat = builtdat.."levels="..dumplua(levels).."\n"
     builtdat = builtdat.."mapdata="..dump.."\n"
-    builtdata = builtdat.."moresprites="..project.moresprites.."\n"
+    builtdat = builtdat.."moresprites="..dumplua(project.moresprites).."\n"
     -- cartdata = cartdata:gsub("(%-%-@begin.*levels%s*=%s*){.-}(.*%-%-@end)","%1"..dumplua(levels).."%2")
     -- cartdata = cartdata:gsub("(%-%-@begin.*mapdata%s*=%s*){.-}(.*%-%-@end)","%1"..dump.."%2")
 

@@ -1,13 +1,13 @@
 nuklear = require 'nuklear'
 filedialog = require 'filedialog'
 serpent = require 'serpent'
-
+px9 = require 'libpx9'
 require 'util'
 require 'room'
 require 'autotiles'
+-- require 'px9'
 
 
-print(dumplua(loadstring("//")))
 
 
 
