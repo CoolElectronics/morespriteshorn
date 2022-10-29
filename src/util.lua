@@ -35,6 +35,16 @@ function fill2d0s(w, h)
     end
     return a
 end
+function fill2dtables(w, h)
+    local a = {}
+    for i = 0, w - 1 do
+        a[i] = {}
+        for j = 0, h - 1 do
+            a[i][j] = {}
+        end
+    end
+    return a
+end
 
 function rectCont2Tiles(i, j, i_, j_)
     return math.min(i, i_), math.min(j, j_), math.abs(i - i_) + 1, math.abs(j - j_) + 1

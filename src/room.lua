@@ -4,12 +4,14 @@ function newRoom(x, y, w, h)
         y = y or 0,
         w = w or 16,
         h = h or 16,
-        hex=true,
+        hex = true,
         data = {},
-        title = "",
+        meta = {},
+        title = ""
     }
     room.data = fill2d0s(room.w, room.h)
-    
+    room.meta = fill2dtables(room.w, room.h)
+
     return room
 end
 
@@ -19,13 +21,21 @@ function drawRoom(room, p8data, highlight)
         for j = 0, room.h - 1 do
             local n = room.data[i][j]
             if not p8data.quads[n] then print(n) end
-            if not highlight or n~=0 then
+            if not highlight or n ~= 0 then
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.draw(p8data.spritesheet, p8data.quads[n], room.x + i*8, room.y + j*8)
-                
+                love.graphics.draw(p8data.spritesheet, p8data.quads[n],
+                                   room.x + i * 8, room.y + j * 8)
+
+                if room.meta[i][j] ~= nil and next(room.meta[i][j]) ~= nil then
+                    -- print(dumplua(next(room.meta[i][j])))
+                    love.graphics.setColor(0.5, 0.5, 0, 0.5)
+                    love.graphics.rectangle("fill", room.x + i * 8,
+                                            room.y + j * 8, 8, 8)
+                end
                 if highlight then
                     love.graphics.setColor(0, 1, 0.5, 0.5)
-                    love.graphics.rectangle("fill", room.x + i*8, room.y + j*8, 8, 8)
+                    love.graphics.rectangle("fill", room.x + i * 8,
+                                            room.y + j * 8, 8, 8)
                 end
             end
         end

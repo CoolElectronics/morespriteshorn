@@ -5,23 +5,21 @@ serpent = require 'serpent'
 require 'util'
 require 'room'
 require 'autotiles'
-
-
+require 'test'
 
 -- global constants
 psep = love.system.getOS() == "Windows" and "\\" or "/" -- path separator
-
 
 -- GLOBAL VARIABLES (im dirty like that)
 -- and stuff that has to do with them
 
 function newProject()
     -- this is UI things
-		love.graphics.setNewFont(12*global_scale)
+    love.graphics.setNewFont(12 * global_scale)
     app = {
         camX = 0,
         camY = 0,
-        camScale = 2, --based on camScaleSetting
+        camScale = 2, -- based on camScaleSetting
         camScaleSetting = 1, -- 0, 1, 2 is 1x, 2x, 3x etc, -1, -2, -3 is 0.5x, 0.25x, 0.125x
         room = nil,
         suppressMouse = false, -- disables mouse-driven editing in love.update() when a click has triggered different action, reset on release
@@ -31,31 +29,29 @@ function newProject()
         messageTimeLeft = nil,
         playtesting = false,
         showToolPanel = true,
-		showGarbageTiles=false,
-        
+        settings = false,
+
         -- history (undo stack)
         history = {},
         historyN = 0,
-        
+
         font = love.graphics.getFont(),
-        
-        left = 0, top = 0, -- top left corner of editing area
-        
+
+        left = 0,
+        top = 0, -- top left corner of editing area
+
         -- these are used in various hacks to work around nuklear being big dumb (or me idk)
         anyWindowHovered = false,
         enterPressed = false,
-        roomAdded = false,
-        
+        roomAdded = false
+
     }
-		--ui:styleSetFont(love.graphics.getFont())
-		ui:stylePush({['font']=app.font})
-		--print(app.font:getHeight())
+    -- ui:styleSetFont(love.graphics.getFont())
+    ui:stylePush({['font'] = app.font})
+    -- print(app.font:getHeight())
     -- this is what goes into history and (mostly) gets saved
-    project = {
-        rooms = {}, 
-        selection = nil,
-    }
-    
+    project = {rooms = {}, moresprites = false, selection = nil}
+
     -- basic p8data with blank spritesheet
     local data = {}
     local imgdata = love.image.newImageData(128, 64)
@@ -64,10 +60,11 @@ function newProject()
     data.quads = {}
     for i = 0, 15 do
         for j = 0, 15 do
-            data.quads[i + j*16] = love.graphics.newQuad(i*8, j*8, 8, 8, data.spritesheet:getDimensions())
+            data.quads[i + j * 16] = love.graphics.newQuad(i * 8, j * 8, 8, 8,
+                                                           data.spritesheet:getDimensions())
         end
     end
-    
+
     p8data = data
 end
 
@@ -75,15 +72,13 @@ function toScreen(x, y)
     return (app.camX + x) * app.camScale + app.left,
            (app.camY + y) * app.camScale + app.top
 end
- 
+
 function fromScreen(x, y)
-    return (x - app.left)/app.camScale - app.camX,
-           (y - app.top)/app.camScale - app.camY
+    return (x - app.left) / app.camScale - app.camX,
+           (y - app.top) / app.camScale - app.camY
 end
 
-function activeRoom()
-    return app.room and project.rooms[app.room]
-end
+function activeRoom() return app.room and project.rooms[app.room] end
 
 function mouseOverTile()
     if activeRoom() then
@@ -122,7 +117,7 @@ function select(i1, j1, i2, j2)
     local i0, j0, w, h = rectCont2Tiles(i1, j1, i2, j2)
     if w > 1 or h > 1 then
         local r = activeRoom()
-        local selection = newRoom(r.x + i0*8, r.y + j0*8, w, h)
+        local selection = newRoom(r.x + i0 * 8, r.y + j0 * 8, w, h)
         for i = 0, w - 1 do
             for j = 0, h - 1 do
                 selection.data[i][j] = r.data[i0 + i][j0 + j]
@@ -136,14 +131,12 @@ end
 function pushHistory()
     local s = dumpproject(project)
     if s ~= app.history[app.historyN] then
-        --print("BEFORE: "..tostring(app.history[app.historyN]))
-        --print("AFTER: "..s)
+        -- print("BEFORE: "..tostring(app.history[app.historyN]))
+        -- print("AFTER: "..s)
         app.historyN = app.historyN + 1
-    
-        for i = app.historyN, #app.history do
-            app.history[i] = nil
-        end
-        
+
+        for i = app.historyN, #app.history do app.history[i] = nil end
+
         app.history[app.historyN] = s
     end
 end
@@ -151,28 +144,26 @@ end
 function undo()
     if app.historyN >= 2 then
         app.historyN = app.historyN - 1
-        
+
         local err
         project, err = loadproject(app.history[app.historyN])
         if err then error(err) end
     end
-    
+
     if not activeRoom() then app.room = nil end
 end
 
 function redo()
     if app.historyN <= #app.history - 1 then
         app.historyN = app.historyN + 1
-        
+
         local err
         project, err = loadproject(app.history[app.historyN])
         if err then error(err) end
     end
-    
+
     if not activeRoom() then app.room = nil end
 end
-
-
 
 require 'fileio'
 require 'mainloop'
