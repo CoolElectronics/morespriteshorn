@@ -83,6 +83,8 @@ function love.update(dt)
     local rpw = app.W * 0.10 -- room panel width
     app.left, app.top = rpw, 0
 
+    if activeRoom() and app.rustic ~= nil then app.rustic = rustic.update() end
+
     ui:frameBegin()
     -- ui:scale(2)
     ui:stylePush{
@@ -131,6 +133,13 @@ function love.update(dt)
             end
 
             if ui:button("Settings") then app.settings = true end
+            if ui:button("Play") and activeRoom() then
+                rustic.start()
+                app.rustic = rustic.update()
+                sendRusticRooms()
+                rustic.resetLevel()
+            end
+            if ui:button("Stop") then app.rustic = nil end
             ui:layoutRow("static", 25 * global_scale, 100 * global_scale, 1)
 
             for j = 0, project.moresprites and 15 or 7 do
@@ -377,8 +386,10 @@ function love.update(dt)
             -- add 0 when no data is there
             for i = 0, neww - 1 do
                 newdata[i] = newdata[i] or {}
+                room.meta[i] = room.meta[i] or {}
                 for j = 0, newh - 1 do
                     newdata[i][j] = newdata[i][j] or 0
+                    room.meta[i][j] = room.meta[i][j] or {}
                 end
             end
 
@@ -437,6 +448,35 @@ function love.draw()
                                 project.selection.y + 0.5 / app.camScale,
                                 project.selection.w * 8, project.selection.h * 8)
     end
+    if activeRoom() and app.rustic and next(app.rustic) then
+        for i = 0, 127, 1 do
+            for j = 0, 127, 1 do
+                -- print(#app.rustic.celeste.mem.graphics)
+                -- print(i + j * 12)
+                local col = app.rustic.celeste.mem.graphics[1 + i + j * 128];
+                if col ~= 0 then
+                    local rgba = p8data.palette[col + 1];
+                    love.graphics.setColor(rgba[1] / 255, rgba[2] / 255,
+                                           rgba[3] / 255, 1);
+                    love.graphics.rectangle("fill", i + activeRoom().x +
+                                                app.rustic.offsetx * 8, j +
+                                                activeRoom().y +
+                                                app.rustic.offsety * 8, 1, 1)
+                end
+            end
+        end
+    end
+    -- if activeRoom() and app.rustic and next(app.rustic) then
+    --     -- for i, obj in ipairs(app.rustic.celeste.objects) do
+    --     --     love.graphics.draw(p8data.spritesheet, p8data.quads[obj.spr],
+    --     --                        activeRoom().x + obj.pos.x + app.rustic.offsetx *
+    --     --                            8, activeRoom().y + obj.pos.y +
+    --     --                            app.rustic.offsety * 8)
+    --     -- end
+    --     for i, t in ipairs(app.rustic.celeste.mem.graphics) do
+
+    --     end
+    -- end
 
     local ti, tj = mouseOverTile()
 
@@ -483,3 +523,19 @@ function love.draw()
     ui:draw()
 end
 
+function sendRusticRooms()
+    local normalized = {}
+    local ilowest = 999
+    local jlowest = 999
+    for i, col in pairs(activeRoom().data) do
+        if i < ilowest then ilowest = i end
+        for j, t in pairs(col) do if j < jlowest then jlowest = j end end
+    end
+    for i, col in pairs(activeRoom().data) do
+        normalized[i - ilowest] = {}
+        for j, t in pairs(col) do
+            normalized[i - ilowest][j - jlowest] = t
+        end
+    end
+    rustic.setRoom(normalized)
+end

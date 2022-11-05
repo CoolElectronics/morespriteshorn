@@ -45,7 +45,7 @@ for platform in platforms:
         shutil.copytree("build/src", f"build/{platform}", dirs_exist_ok=True)
         
         # copy .so's
-        for so in ["nuklear.so", "nfd.so"]:
+        for so in ["nuklear.so", "nfd.so","librustic.so"]:
             shutil.copy(f"bin/{platform}/{so}", f"build/{platform}")
 
 # create archives    

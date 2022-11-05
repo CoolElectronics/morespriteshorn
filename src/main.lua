@@ -1,6 +1,7 @@
 nuklear = require 'nuklear'
 filedialog = require 'filedialog'
 serpent = require 'serpent'
+rustic = require "librustic"
 
 require 'util'
 require 'room'

@@ -101,9 +101,9 @@ function autotile(room, i, j, k)
                        b1(matches(isAutotile(room, i - 1, j), k)) * 2 +
                        b1(matches(isAutotile(room, i, j + 1), k)) * 4 +
                        b1(matches(isAutotile(room, i, j - 1), k)) * 8
-        room.data[i][j] = autotiles[k][nb]
-        room.meta[i][j] = {}
+        placeTile(room, i, j, autotiles[k][nb])
     end
+    sendRusticRooms()
 end
 
 function autotileWithNeighbors(room, i, j, k)
@@ -112,4 +112,10 @@ function autotileWithNeighbors(room, i, j, k)
     autotile(room, i - 1, j, k)
     autotile(room, i, j + 1, k)
     autotile(room, i, j - 1, k)
+end
+
+function placeTile(room, i, j, tile)
+    room.data[i][j] = tile
+    room.meta[i][j] = {}
+
 end

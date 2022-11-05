@@ -10,6 +10,10 @@ function love.mousepressed(x, y, button, istouch, presses)
                     my <= room.y + room.h * 8 then
                     app.room = i
                     if app.room == oldActiveRoom then break end
+                    if app.rustic and next(app.rustic) then
+                        sendRusticRooms()
+                        rustic.resetLevel()
+                    end
                 end
             end
             if app.room ~= oldActiveRoom then
@@ -89,8 +93,8 @@ function love.mousereleased(x, y, button, istouch, presses)
             local i0, j0, w, h = rectCont2Tiles(i1, j1, ti, tj)
             for i = i0, i0 + w - 1 do
                 for j = j0, j0 + h - 1 do
-                    room.data[i][j] = n
-                    room.meta[i][j] = {}
+                    placeTile(room, i, j, n)
+                    sendRusticRooms()
                 end
             end
 

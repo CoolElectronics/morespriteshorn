@@ -1,3 +1,5 @@
+keymap = {left = 0, right = 1, up = 2, down = 3, z = 4, x = 5}
+
 function love.keypressed(key, scancode, isrepeat)
     local x, y = love.mouse.getPosition()
     local mx, my = fromScreen(x, y)
@@ -14,6 +16,11 @@ function love.keypressed(key, scancode, isrepeat)
     if project.selection then
         project.selection.x = project.selection.x + dx * 8
         project.selection.y = project.selection.y + dy * 8
+    end
+
+    if app.rustic and keymap[key] then
+        rustic.press(keymap[key])
+        return
     end
 
     -- Ctrl+Z, Ctrl+Shift+Z
@@ -245,6 +252,10 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.keyreleased(key, scancode)
+    if app.rustic and keymap[key] then
+        rustic.release(keymap[key])
+        return
+    end
     -- just save history every time a key is released lol
     pushHistory()
 
