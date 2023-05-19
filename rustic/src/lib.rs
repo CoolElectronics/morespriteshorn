@@ -114,8 +114,8 @@ fn load_tiles() {
             state.celeste.mem.mset(
                 x,
                 y,
-                state.room[state.offsetx as usize + x as usize]
-                    [state.offsety as usize + y as usize],
+                state.room[(state.offsetx as usize + x as usize).min(state.room.len() - 1)]
+                    [(state.offsety as usize + y as usize).min(state.room[0].len() - 1)],
             );
         }
     }
