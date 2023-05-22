@@ -553,7 +553,7 @@ function savePico8(filename)
     local dump = dumplua(mapdata):gsub("%%", "%%%%")
     local builtdat = "--@begin\n";
     builtdat = builtdat .. "levels=" .. dumplua(levels) .. "\n"
-    builtdat = builtdat .. "meta=" .. dumplua(meta) .. "\n"
+    -- builtdat = builtdat .. "meta=" .. dumplua(meta) .. "\n"
     builtdat = builtdat .. "mapdata=" .. dump .. "\n"
     builtdat = builtdat .. "moresprites=" .. dumplua(project.moresprites) ..
                    "\n"

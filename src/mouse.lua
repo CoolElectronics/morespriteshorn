@@ -20,7 +20,7 @@ function love.mousepressed(x, y, button, istouch, presses)
                 app.suppressMouse = true
             end
 
-            if love.keyboard.isDown("lalt") then
+            if love.keyboard.isDown("lalt") or love.keyboard.isDown("l") then
                 if app.room then
                     app.roomMoveX, app.roomMoveY = mx - activeRoom().x,
                                                    my - activeRoom().y
@@ -49,7 +49,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             end
         end
     elseif button == 2 then
-        if love.keyboard.isDown("lalt") and app.room then
+        if (love.keyboard.isDown("lalt") or love.keyboard.isDown("l")) and app.room then
             app.roomResizeSideX = sign(
                                       mx - activeRoom().x - activeRoom().w * 8 /
                                           2)
