@@ -537,5 +537,7 @@ function sendRusticRooms()
             normalized[i - ilowest][j - jlowest] = t
         end
     end
-    rustic.setRoom(normalized)
+    if app.rustic then
+        rustic.setRoom(normalized)
+    end
 end
