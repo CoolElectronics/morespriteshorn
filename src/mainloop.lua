@@ -1,7 +1,7 @@
 -- UI things
 function tileButton(n, highlight)
     local x, y, w, h = ui:widgetBounds()
-    ui:image({p8data.spritesheet, p8data.quads[n]})
+    ui:image({ p8data.spritesheet, p8data.quads[n] })
 
     local hov = false
     if ui:inputIsHovered(x, y, w, h) then hov = true end
@@ -33,7 +33,7 @@ function toolLabel(label, tool)
         local bg = "#00ff88" -- "#afafaf"
         ui:rectMultiColor(x, y, w + 4, h, bg, bg, bg, bg)
         color = "#2d2d2d"
-        ui:stylePush{window = {background = bg}}
+        ui:stylePush { window = { background = bg } }
 
         app.tool = tool
     end
@@ -53,7 +53,7 @@ function love.load(args)
     ui = nuklear.newUI()
 
     global_scale = 1 -- global scale, to run nicely on hi dpi displays
-    tms = 4 -- tile menu scale
+    tms = 4          -- tile menu scale
 
     for _, v in ipairs(args) do
         if v == "--hidpi" then
@@ -69,11 +69,11 @@ function love.load(args)
 
     checkmarkIm = love.graphics.newImage("checkmark.png")
     checkmarkWithBg = love.graphics.newCanvas(checkmarkIm:getWidth() * 5 / 4,
-                                              checkmarkIm:getHeight() * 5 / 4)
+        checkmarkIm:getHeight() * 5 / 4)
     love.graphics.setCanvas(checkmarkWithBg)
     love.graphics.clear(0x64 / 0xff, 0x64 / 0xff, 0x64 / 0xff)
     love.graphics.draw(checkmarkIm, checkmarkIm:getWidth() / 8,
-                       checkmarkIm:getHeight() / 8)
+        checkmarkIm:getHeight() / 8)
     love.graphics.setCanvas()
 end
 
@@ -83,14 +83,13 @@ function love.update(dt)
     local rpw = app.W * 0.10 -- room panel width
     app.left, app.top = rpw, 0
 
-    if activeRoom() and app.rustic ~= nil then app.rustic = rustic.update() end
 
     ui:frameBegin()
     -- ui:scale(2)
-    ui:stylePush{
-        window = {spacing = {x = 1, y = 1}, padding = {x = 1, y = 1}},
+    ui:stylePush {
+        window = { spacing = { x = 1, y = 1 }, padding = { x = 1, y = 1 } },
         selectable = {
-            padding = {x = 0, y = 0},
+            padding = { x = 0, y = 0 },
             ["normal active"] = "#000000",
             ["hover active"] = "#000000",
             ["pressed active"] = "#000000"
@@ -102,11 +101,13 @@ function love.update(dt)
     }
 
     -- room panel
-    if ui:windowBegin("Room Panel", 0, 0, rpw, app.H, {"scrollbar"}) then
+    if ui:windowBegin("Room Panel", 0, 0, rpw, app.H, { "scrollbar" }) then
         ui:layoutRow("dynamic", 25 * global_scale, 1)
         for n = 1, #project.rooms do
             if ui:selectable("[" .. n .. "] " .. project.rooms[n].title,
-                             n == app.room) then app.room = n end
+                    n == app.room) then
+                app.room = n
+            end
         end
 
         if app.roomAdded then
@@ -158,24 +159,23 @@ function love.update(dt)
             ui:layoutRow("static", 8 * tms, 8 * tms, #autotiles)
             for k, auto in ipairs(autotiles) do
                 if tileButton(auto[5],
-                              app.currentTile == auto[15] and app.autotile) then
+                        app.currentTile == auto[15] and app.autotile) then
                     app.currentTile = auto[15]
                     app.autotile = k
                 end
             end
         end
         ui:windowEnd()
-
     end
     if app.settings then
         local w, h = 200 * global_scale, 400 * global_scale
         if ui:windowBegin("Cart Settings", app.W / 2 - w / 2, app.H / 2 - h / 2,
-                          w, h, {"title", "border", "closable", "movable"}) then
+                w, h, { "title", "border", "closable", "movable" }) then
             ui:layoutRow("dynamic", 25 * global_scale, 1)
             -- ui:s
             -- ui:label("enabling moresprites mode will allow you to store extra sprites on ")
             project.moresprites = ui:checkbox("Moresprites mode",
-                                              project.moresprites)
+                project.moresprites)
             -- ui:stylePop()
             ui:layoutRow("dynamic", 25 * global_scale, 1)
             if ui:button("OK") or app.enterPressed then
@@ -191,27 +191,27 @@ function love.update(dt)
 
         local w, h = 200 * global_scale, 400 * global_scale
         if ui:windowBegin("Rename room", app.W / 2 - w / 2, app.H / 2 - h / 2,
-                          w, h, {"title", "border", "closable", "movable"}) then
+                w, h, { "title", "border", "closable", "movable" }) then
             local x, y = div8(room.x), div8(room.y)
             local fits_on_map = x >= 0 and x + room.w <= 128 and y >= 0 and y +
-                                    room.h <= 64
+                room.h <= 64
             ui:layoutRow("dynamic", 25 * global_scale, 1)
             if not fits_on_map then
                 local style = {}
-                for k, v in pairs({"text normal", "text hover", "text active"}) do
+                for k, v in pairs({ "text normal", "text hover", "text active" }) do
                     style[v] = "#707070"
                 end
-                for k, v in pairs({"normal", "hover", "active"}) do
-                    style[v] = checkmarkWithBg -- show both selected and unselected as having a check to avoid nukelear limitations
+                for k, v in pairs({ "normal", "hover", "active" }) do
+                    style[v] =
+                        checkmarkWithBg -- show both selected and unselected as having a check to avoid nukelear limitations
                     -- kinda hacky but it works decently enough
                 end
-                ui:stylePush({['checkbox'] = style})
-
+                ui:stylePush({ ['checkbox'] = style })
             else
                 ui:stylePush({})
             end
             ui:checkbox("Level Stored As Hex",
-                        fits_on_map and app.renameRoomVTable.hex or true)
+                fits_on_map and app.renameRoomVTable.hex or true)
             ui:stylePop()
             ui:layoutRow("dynamic", 25 * global_scale, 1)
 
@@ -260,8 +260,8 @@ function love.update(dt)
 
         local w, h = 200 * global_scale, 400 * global_scale
         if ui:windowBegin("Edit tile metadata", app.W / 2 - w / 2,
-                          app.H / 2 - h / 2, w, h,
-                          {"title", "border", "closable", "movable"}) then
+                app.H / 2 - h / 2, w, h,
+                { "title", "border", "closable", "movable" }) then
             ui:layoutRow("dynamic", 25 * global_scale, 1)
 
             local i = 0
@@ -270,7 +270,7 @@ function love.update(dt)
             for i, tbl in pairs(app.editMetadata.table) do
                 if tbl.val ~= nil then
                     ui:layoutRow("static", 25 * global_scale, h / 6, 3)
-                    local vt = {value = tbl.key}
+                    local vt = { value = tbl.key }
                     ui:edit("simple", vt)
                     ui:edit("box", app.editMetadata.table[i].val)
 
@@ -286,13 +286,12 @@ function love.update(dt)
                     end
                     i = i + 1
                     ui:layoutRow("dynamic", 25 * global_scale, 1)
-
                 end
             end
             if ui:button("new") then
                 app.editMetadata.table[#app.editMetadata.table + 1] = {
                     key = "key" .. nkeys,
-                    val = {value = "nil"}
+                    val = { value = "nil" }
                 }
             end
 
@@ -377,7 +376,7 @@ function love.update(dt)
             for i, col in pairs(room.data) do
                 for j, n in pairs(col) do
                     local i_, j_ = i + (ax == left and dx or 0),
-                                   j + (ay == top and dy or 0)
+                        j + (ay == top and dy or 0)
 
                     if not newdata[i_] then newdata[i_] = {} end
                     newdata[i_][j_] = n
@@ -411,6 +410,7 @@ function love.update(dt)
 end
 
 function love.draw()
+    if activeRoom() and app.rustic ~= nil then app.rustic = rustic.update() end
     love.graphics.clear(0.25, 0.25, 0.25)
     love.graphics.reset()
     love.graphics.setLineStyle("rough")
@@ -435,7 +435,7 @@ function love.draw()
             drawRoom(room, p8data)
             love.graphics.setColor(0.5, 0.5, 0.5, 0.4)
             love.graphics.rectangle("fill", room.x, room.y, room.w * 8,
-                                    room.h * 8)
+                room.h * 8)
         end
     end
     if activeRoom() then drawRoom(activeRoom(), p8data) end
@@ -444,11 +444,17 @@ function love.draw()
         love.graphics.setColor(0, 1, 0.5)
         love.graphics.setLineWidth(1 / app.camScale)
         love.graphics.rectangle("line",
-                                project.selection.x + 0.5 / app.camScale,
-                                project.selection.y + 0.5 / app.camScale,
-                                project.selection.w * 8, project.selection.h * 8)
+            project.selection.x + 0.5 / app.camScale,
+            project.selection.y + 0.5 / app.camScale,
+            project.selection.w * 8, project.selection.h * 8)
     end
     if activeRoom() and app.rustic and next(app.rustic) then
+        love.graphics.setLineWidth(1 / app.camScale)
+        love.graphics.setColor(255, 0, 0, 1);
+        love.graphics.rectangle("line", activeRoom().x +
+            app.rustic.offsetx * 8,
+            activeRoom().y +
+            app.rustic.offsety * 8, 8 * 16, 8 * 16)
         for i = 0, 127, 1 do
             for j = 0, 127, 1 do
                 -- print(#app.rustic.celeste.mem.graphics)
@@ -457,11 +463,11 @@ function love.draw()
                 if col ~= 0 then
                     local rgba = p8data.palette[col + 1];
                     love.graphics.setColor(rgba[1] / 255, rgba[2] / 255,
-                                           rgba[3] / 255, 1);
+                        rgba[3] / 255, 1);
                     love.graphics.rectangle("fill", i + activeRoom().x +
-                                                app.rustic.offsetx * 8, j +
-                                                activeRoom().y +
-                                                app.rustic.offsety * 8, 1, 1)
+                        app.rustic.offsetx * 8, j +
+                        activeRoom().y +
+                        app.rustic.offsety * 8, 1, 1)
                 end
             end
         end
@@ -484,25 +490,25 @@ function love.draw()
         if ti and not app.toolMenuX then
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(p8data.spritesheet,
-                               p8data.quads[app.currentTile],
-                               activeRoom().x + ti * 8, activeRoom().y + tj * 8)
+                p8data.quads[app.currentTile],
+                activeRoom().x + ti * 8, activeRoom().y + tj * 8)
 
             love.graphics.setColor(0, 1, 0.5)
             love.graphics.setLineWidth(1 / app.camScale)
             love.graphics.rectangle("line", activeRoom().x + ti * 8 + 0.5 /
-                                        app.camScale, activeRoom().y + tj * 8 +
-                                        0.5 / app.camScale, 8, 8)
+                app.camScale, activeRoom().y + tj * 8 +
+                0.5 / app.camScale, 8, 8)
         end
     elseif (app.tool == "rectangle" and app.rectangleI) or app.tool == "select" then
         local i1, j1 = app.rectangleI or app.selectTileI,
-                       app.rectangleJ or app.selectTileJ
+            app.rectangleJ or app.selectTileJ
         if i1 and ti then
             local i, j, w, h = rectCont2Tiles(ti, tj, i1, j1)
             love.graphics.setColor(0, 1, 0.5)
             love.graphics.setLineWidth(1 / app.camScale)
             love.graphics.rectangle("line", activeRoom().x + i * 8 + 0.5 /
-                                        app.camScale, activeRoom().y + j * 8 +
-                                        0.5 / app.camScale, w * 8, h * 8)
+                app.camScale, activeRoom().y + j * 8 +
+                0.5 / app.camScale, w * 8, h * 8)
         end
     end
 
@@ -517,7 +523,7 @@ function love.draw()
 
     if app.playtesting then
         local s = app.playtesting == 1 and "[playtesting]" or
-                      "[playtesting, 2 dashes]"
+            "[playtesting, 2 dashes]"
         love.graphics.print(s, 4, 4)
     end
     ui:draw()

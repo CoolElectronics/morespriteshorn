@@ -1,3 +1,5 @@
+use std::sync::atomic::AtomicBool;
+
 use mlua::prelude::*;
 use rand::prelude::*;
 use rustic_mountain_core::{
@@ -25,6 +27,7 @@ struct State {
     room: Vec<Vec<u8>>,
     offsetx: i32,
     offsety: i32,
+    lock: AtomicBool,
 }
 
 fn start<'a>(lua: &'a Lua, _: ()) -> LuaResult<()> {
@@ -39,6 +42,7 @@ fn start<'a>(lua: &'a Lua, _: ()) -> LuaResult<()> {
                 consts::FLAGS.into(),
                 "fontatlas".into(),
             ),
+            lock: false.into(),
             room: vec![],
             offsetx: 0,
             offsety: 0,
@@ -47,7 +51,6 @@ fn start<'a>(lua: &'a Lua, _: ()) -> LuaResult<()> {
     }
 }
 fn update<'a>(lua: &'a Lua, _: ()) -> LuaResult<LuaValue<'a>> {
-    // dbg!("asdasd");
     let state = unsafe { &mut (*STATE) };
 
     // if state.room.len() > 0 {
@@ -68,7 +71,7 @@ fn update<'a>(lua: &'a Lua, _: ()) -> LuaResult<LuaValue<'a>> {
                 do_offset(ivec(-offset, 0), &mut player, &mut obj);
             }
             if obj.pos.y > 15.0 * 8.0 && state.offsety < state.room[0].len() as i32 - 17 {
-                let offset = 12.min(state.room[0].len() as i32 - state.offsety - 17);
+                let offset = 12.min(state.room[0].len() as i32 - state.offsety - 16);
                 do_offset(ivec(0, offset), &mut player, &mut obj);
             }
             if obj.pos.y < 1.0 * 8.0 && state.offsety > 0 {
@@ -77,9 +80,12 @@ fn update<'a>(lua: &'a Lua, _: ()) -> LuaResult<LuaValue<'a>> {
             }
         }
     }
+
+    *state.lock.get_mut() = true;
     state.celeste.next_tick();
     draw(&mut state.celeste);
 
+    *state.lock.get_mut() = false;
     lua.to_value(state)
 }
 fn ivec(x: i32, y: i32) -> Vector {
@@ -118,6 +124,38 @@ fn load_tiles() {
                     [(state.offsety as usize + y as usize).min(state.room[0].len() - 1)],
             );
         }
+    }
+
+    let mut player_clone = None;
+    for i in &state.celeste.objects {
+        if let Err(_) = i.try_borrow() {
+            player_clone = Some(i.clone());
+        }
+    }
+    if *state.lock.get_mut() {
+        return;
+    }
+
+    state.celeste.load_room(0, 0);
+    state.celeste.objects = state
+        .celeste
+        .objects
+        .clone()
+        .into_iter()
+        .filter(|f| {
+            if let Ok(p) = f.try_borrow() {
+                if let ObjectType::PlayerSpawn(_) = p.obj_type {
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+        })
+        .collect();
+    if let Some(p) = player_clone {
+        state.celeste.objects.push(p);
     }
 }
 fn press<'a>(lua: &'a Lua, btn: usize) -> LuaResult<()> {
@@ -203,22 +241,22 @@ pub fn draw(celeste: &mut Celeste) {
         v.borrow_mut().draw(celeste);
     }
 
-    for particle in &mut celeste.particles {
-        particle.x += particle.spd;
-        particle.y += particle.off.to_degrees().sin();
-
-        celeste.mem.rectfill(
-            particle.x as i32,
-            particle.y as i32,
-            (particle.x + particle.s) as i32,
-            (particle.y + particle.s) as i32,
-            particle.c,
-        );
-        if particle.x > 132.0 {
-            particle.x = -4.0;
-            particle.y = celeste.mem.rng.gen_range(0.0..128.0);
-        }
-    }
+    // for particle in &mut celeste.particles {
+    //     particle.x += particle.spd;
+    //     particle.y += particle.off.to_degrees().sin();
+    //
+    //     celeste.mem.rectfill(
+    //         particle.x as i32,
+    //         particle.y as i32,
+    //         (particle.x + particle.s) as i32,
+    //         (particle.y + particle.s) as i32,
+    //         particle.c,
+    //     );
+    //     if particle.x > 132.0 {
+    //         particle.x = -4.0;
+    //         particle.y = celeste.mem.rng.gen_range(0.0..128.0);
+    //     }
+    // }
     for particle in &mut celeste.dead_particles {
         particle.x += particle.dx;
         particle.y += particle.dy;
